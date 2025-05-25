@@ -1,7 +1,7 @@
 //##############
 // Auther: Mayuresh Piske
 // Date: 25 May 2025
-// Design: Sync fifo
+// Design: sync_fifo.sv
 // Description: parameterized sync fifo
 //##############
 
