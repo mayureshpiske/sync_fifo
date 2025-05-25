@@ -87,10 +87,8 @@ assign rd_en_t = rden && !empty;
   end
 
   // Status Flags: Full, Almost Full, Empty, Almost Empty
-  assign full         = (fifo_cnt[PTR_WIDTH:0] == FIFO_DEPTH);
-  assign almost_full  = (fifo_cnt[PTR_WIDTH:0] >= ALMOST_FULL_DEPTH);
-  assign empty        = (fifo_cnt[PTR_WIDTH:0] == 0);
-  assign almost_empty = (fifo_cnt[PTR_WIDTH:0] <= ALMOST_EMPTY_DEPTH);
+    assign full         = (fifo_cnt[PTR_WIDTH:0] == FIFO_DEPTH[PTR_WIDTH:0]);
+    assign empty        = (fifo_cnt[PTR_WIDTH:0] == (PTR_WIDTH+1{1'b0}});
  
   generate
     if (EN_ALMOST_FLG) begin : en_almost_flag_1
