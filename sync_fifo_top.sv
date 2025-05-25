@@ -4,7 +4,6 @@
 // Design: sync_fifo.sv
 // Description: parameterized sync fifo
 //##############
-
 module sync_fifo_top #(
   parameter logic [31:0] FIFO_DEPTH = 32'd4,
   parameter logic [31:0] FIFO_WIDTH = 32'd8,
@@ -28,7 +27,7 @@ module sync_fifo_top #(
 );
 
 // localparam
-  localparam  PTR_WIDTH = $clog2(FIFO_DEPTH);
+  localparam  logic [31:0] PTR_WIDTH = $clog2(FIFO_DEPTH);
 
 // interanl signals
   logic [PTR_WIDTH:0]          rd_ptr;
@@ -87,8 +86,8 @@ assign rd_en_t = rden && !empty;
     else begin
       // Update FIFO count based on write and read enables.
       case ({wr_en_t, rd_en_t})
-        2'b10: fifo_cnt   <= PTR_WIDTH'(fifo_cnt + {{(PTR_WIDTH-1){1'b0}},wr_en_t});   // Write only
-        2'b10: fifo_cnt   <= PTR_WIDTH'(fifo_cnt + {{(PTR_WIDTH-1){1'b0}},rd_en_t});   // Read only
+        2'b10: fifo_cnt   <= PTR_WIDTH'(fifo_cnt + {{(PTR_WIDTH-1){1'b0}},wren});   // Write only
+        2'b01: fifo_cnt   <= PTR_WIDTH'(fifo_cnt - {{(PTR_WIDTH-1){1'b0}},rden});   // Read only
         default: fifo_cnt <= fifo_cnt;      // Either both or none
       endcase
     end
@@ -96,7 +95,7 @@ assign rd_en_t = rden && !empty;
 
   // Status Flags: Full, Almost Full, Empty, Almost Empty
     assign full         = (fifo_cnt[PTR_WIDTH:0] == FIFO_DEPTH[PTR_WIDTH:0]);
-    assign empty        = (fifo_cnt == { (PTR_WIDTH+1) {1'b0} });
+    assign empty        = (fifo_cnt[PTR_WIDTH:0] == { (PTR_WIDTH+1) {1'b0} });
  
   generate
     if (EN_ALMOST_FLG) begin : en_almost_flag_1
@@ -109,6 +108,9 @@ assign rd_en_t = rden && !empty;
   endgenerate
 
 endmodule
+  
+  
+  
   
   
   
