@@ -1,10 +1,11 @@
+// Code your design here
 module sync_fifo_top #(
   parameter logic [31:0] FIFO_DEPTH = 32'd4,
   parameter logic [31:0] FIFO_WIDTH = 32'd8,
-  parameter logic [31:0] ALMOST_FULL_DEPTH = FIFO_DEPTH - 1;
+  parameter logic [31:0] ALMOST_FULL_DEPTH = FIFO_DEPTH - 1,
   parameter logic [31:0] ALMOST_EMPTY_DEPTH = 32'd1,
   parameter logic        EN_ALMOST_FLG = 1'b1,
-  parameter logic        WR_MEM_NOT_RST_FLOPS = 1'b0
+  parameter logic        WR_MEM_NON_RST_FLOPS = 1'b0
 ) (
   // input signals
   input logic                   clk,
@@ -13,7 +14,7 @@ module sync_fifo_top #(
   input logic  [FIFO_WIDTH-1:0] wrdata,
   input logic                   rden,
   // output signals
-  output logic [FIFO_WIDTH-1:0] rddata;
+  output logic [FIFO_WIDTH-1:0] rddata,
   output logic                  full,
   output logic                  almost_full,
   output logic                  empty,
@@ -27,7 +28,7 @@ module sync_fifo_top #(
   logic [PTR_WIDTH:0]          rd_ptr;
   logic [PTR_WIDTH:0]          wr_ptr;
   logic [PTR_WIDTH:0]          fifo_cnt;
-  logic [DATA_WIDTH-1:0]       r_rddata;
+  logic [FIFO_WIDTH-1:0]       r_rddata;
 
   // FIFO memory array
   logic [FIFO_WIDTH-1:0] mem [0:FIFO_DEPTH-1];
@@ -46,7 +47,7 @@ module sync_fifo_top #(
 generate
   // write into memory
   if (WR_MEM_NON_RST_FLOPS) begin: wr_mem_non_rst_flops_1
-     always_ff @(posedge clk or negedge rstn) begin
+     always_ff @(posedge clk) begin
       if (wren && !full) begin
         mem[wr_ptr] <= wrdata;
       end  
@@ -59,7 +60,8 @@ generate
         end : mem_fifo_rst
       end else if (wren && !full) begin
           mem[wr_ptr] <= wrdata;
-      end  
+      end
+     end  
   end
 endgenerate
 
@@ -88,7 +90,7 @@ assign rd_en_t = rden && !empty;
 
   // Status Flags: Full, Almost Full, Empty, Almost Empty
     assign full         = (fifo_cnt[PTR_WIDTH:0] == FIFO_DEPTH[PTR_WIDTH:0]);
-    assign empty        = (fifo_cnt[PTR_WIDTH:0] == (PTR_WIDTH+1{1'b0}});
+    assign empty        = (fifo_cnt == { (PTR_WIDTH+1) {1'b0} });
  
   generate
     if (EN_ALMOST_FLG) begin : en_almost_flag_1
