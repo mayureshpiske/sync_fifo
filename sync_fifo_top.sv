@@ -2,7 +2,7 @@
 // Auther: Mayuresh Piske
 // Date: 25 May 2025
 // Design: Sync fifo
-// Description: async fifo is used when multibit is travelling from one clock domain to another clock domain
+// Description: parameterized sync fifo
 //##############
 
 module sync_fifo_top #(
