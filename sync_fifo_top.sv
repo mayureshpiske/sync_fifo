@@ -2,7 +2,9 @@ module sync_fifo_top #(
   parameter logic [31:0] FIFO_DEPTH = 32'd4,
   parameter logic [31:0] FIFO_WIDTH = 32'd8,
   parameter logic [31:0] ALMOST_FULL_DEPTH = FIFO_DEPTH - 1;
-  parameter logic [31:0] ALMOST_EMPTY_DEPTH = 32'd1
+  parameter logic [31:0] ALMOST_EMPTY_DEPTH = 32'd1,
+  parameter logic        EN_ALMOST_FLG = 1'b1,
+  parameter logic        WR_MEM_NOT_RST_FLOPS = 1'b0
 ) (
   // input signals
   input logic                   clk,
@@ -41,16 +43,25 @@ module sync_fifo_top #(
     end
   end  
 
+generate
   // write into memory
-  always_ff @(posedge clk or negedge rstn) begin
-    if (!rstn) begin
-      for (int i=0; i < FIFO_DEPTH; i++) begin : mem_fifo_rst
-        mem[i]      <= '0;
-      end : mem_fifo_rst
-    end else if (wren && !full) begin
+  if (WR_MEM_NON_RST_FLOPS) begin: wr_mem_non_rst_flops_1
+     always_ff @(posedge clk or negedge rstn) begin
+      if (wren && !full) begin
         mem[wr_ptr] <= wrdata;
-    end  
+      end  
+     end
+  end else begin : wr_mem_non_rst_flops_0  
+     always_ff @(posedge clk or negedge rstn) begin
+      if (!rstn) begin
+        for (int i=0; i < FIFO_DEPTH; i++) begin : mem_fifo_rst
+          mem[i]      <= '0;
+        end : mem_fifo_rst
+      end else if (wren && !full) begin
+          mem[wr_ptr] <= wrdata;
+      end  
   end
+endgenerate
 
 // read from memory
   assign rddata = mem[rd_ptr];
@@ -76,11 +87,21 @@ assign rd_en_t = rden && !empty;
   end
 
   // Status Flags: Full, Almost Full, Empty, Almost Empty
-  assign full         = (fifo_cnt == FIFO_DEPTH);
-  assign almost_full  = (fifo_cnt >= (FIFO_DEPTH - ALMOST_FULL_DEPTH));
-  assign empty        = (fifo_cnt == 0);
-  assign almost_empty = (fifo_cnt <= ALMOST_EMPTY_DEPTH);
-  
+  assign full         = (fifo_cnt[PTR_WIDTH:0] == FIFO_DEPTH);
+  assign almost_full  = (fifo_cnt[PTR_WIDTH:0] >= ALMOST_FULL_DEPTH);
+  assign empty        = (fifo_cnt[PTR_WIDTH:0] == 0);
+  assign almost_empty = (fifo_cnt[PTR_WIDTH:0] <= ALMOST_EMPTY_DEPTH);
+ 
+  generate
+    if (EN_ALMOST_FLG) begin : en_almost_flag_1
+        assign almost_full  = (fifo_cnt[PTR_WIDTH:0] >= ALMOST_FULL_DEPTH[PTR_WIDTH:0]);
+        assign almost_empty = (fifo_cnt[PTR_WIDTH:0] <= ALMOST_EMPTY_DEPTH[PTR_WIDTH:0]);
+    end else begin  : en_almost_flag_0
+        assign almost_full  = 1'b0;
+        assign almost_empty = 1'b0;
+    end
+  endgenerate
+
 endmodule
   
   
