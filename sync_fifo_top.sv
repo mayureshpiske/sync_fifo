@@ -4,7 +4,7 @@
 // Design: Sync fifo
 // Description: async fifo is used when multibit is travelling from one clock domain to another clock domain
 //##############
-// Code your design here
+
 module sync_fifo_top #(
   parameter logic [31:0] FIFO_DEPTH = 32'd4,
   parameter logic [31:0] FIFO_WIDTH = 32'd8,
